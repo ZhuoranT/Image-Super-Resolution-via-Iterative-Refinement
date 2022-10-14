@@ -130,3 +130,11 @@ dmypy.json
 .pyre/
 
 *.lmdb
+
+*.pth
+
+/input/
+
+nohup.out
+
+
