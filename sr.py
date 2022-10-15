@@ -9,13 +9,18 @@ from core.wandb_logger import WandbLogger
 from tensorboardX import SummaryWriter
 import os
 import numpy as np
+import gc
+
 
 if __name__ == "__main__":
+    gc.collect()
+    torch.cuda.empty_cache()
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str, default='config/sr_sr3_16_128.json',
                         help='JSON file for configuration')
     parser.add_argument('-p', '--phase', type=str, choices=['train', 'val'],
-                        help='Run either train(training) or val(generation)', default='train')
+                        help='Run either train(training) or val(generation)',
+                        default='train')
     parser.add_argument('-gpu', '--gpu_ids', type=str, default=None)
     parser.add_argument('-debug', '-d', action='store_true')
     parser.add_argument('-enable_wandb', action='store_true')
@@ -138,8 +143,9 @@ if __name__ == "__main__":
 
                         if wandb_logger:
                             wandb_logger.log_image(
-                                f'validation_{idx}', 
-                                np.concatenate((fake_img, sr_img, hr_img), axis=1)
+                                f'validation_{idx}',
+                                np.concatenate(
+                                    (fake_img, sr_img, hr_img), axis=1)
                             )
 
                     avg_psnr = avg_psnr / idx
@@ -165,7 +171,8 @@ if __name__ == "__main__":
                     diffusion.save_network(current_epoch, current_step)
 
                     if wandb_logger and opt['log_wandb_ckpt']:
-                        wandb_logger.log_checkpoint(current_epoch, current_step)
+                        wandb_logger.log_checkpoint(
+                            current_epoch, current_step)
 
             if wandb_logger:
                 wandb_logger.log_metrics({'epoch': current_epoch-1})
@@ -213,14 +220,17 @@ if __name__ == "__main__":
                 fake_img, '{}/{}_{}_inf.png'.format(result_path, current_step, idx))
 
             # generation
-            eval_psnr = Metrics.calculate_psnr(Metrics.tensor2img(visuals['SR'][-1]), hr_img)
-            eval_ssim = Metrics.calculate_ssim(Metrics.tensor2img(visuals['SR'][-1]), hr_img)
+            eval_psnr = Metrics.calculate_psnr(
+                Metrics.tensor2img(visuals['SR'][-1]), hr_img)
+            eval_ssim = Metrics.calculate_ssim(
+                Metrics.tensor2img(visuals['SR'][-1]), hr_img)
 
             avg_psnr += eval_psnr
             avg_ssim += eval_ssim
 
             if wandb_logger and opt['log_eval']:
-                wandb_logger.log_eval_data(fake_img, Metrics.tensor2img(visuals['SR'][-1]), hr_img, eval_psnr, eval_ssim)
+                wandb_logger.log_eval_data(fake_img, Metrics.tensor2img(
+                    visuals['SR'][-1]), hr_img, eval_psnr, eval_ssim)
 
         avg_psnr = avg_psnr / idx
         avg_ssim = avg_ssim / idx
