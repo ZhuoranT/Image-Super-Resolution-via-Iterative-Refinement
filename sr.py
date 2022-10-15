@@ -179,6 +179,7 @@ if __name__ == "__main__":
 
         # save model
         logger.info('End of training.')
+        Model.save_network()     
     else:
         logger.info('Begin Model Evaluation.')
         avg_psnr = 0.0
